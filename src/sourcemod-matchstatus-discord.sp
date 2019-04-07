@@ -207,9 +207,9 @@ public getTsStats() {
 			if (StrEqual(T_STATS, "")) {
 				Format(T_STATS, sizeof(T_STATS), "%s: K: %d / D: %d - %f", playerName, Frags, Deaths, KDRate);
 			} else if (i != 1 && i != MaxClients) {
-				Format(T_STATS, sizeof(T_STATS), "%s, %s: K: %d / D: %d - %f, ", T_STATS, playerName, playerName, Frags, Deaths, KDRate);
+				Format(T_STATS, sizeof(T_STATS), "%s, %s: K: %d / D: %d - %f, ", T_STATS, playerName, Frags, Deaths, KDRate);
 			} else if (i != 1 && i == MaxClients) {
-				Format(T_STATS, sizeof(T_STATS), "%s%s: K: %d / D: %d - %f", T_STATS, playerName, playerName, Frags, Deaths, KDRate);
+				Format(T_STATS, sizeof(T_STATS), "%s%s: K: %d / D: %d - %f", T_STATS, playerName, Frags, Deaths, KDRate);
 			}
 		}
 	}
@@ -249,9 +249,9 @@ public getCTsStats() {
 			if (StrEqual(CT_STATS, "")) {
 				Format(CT_STATS, sizeof(CT_STATS), "%s: K: %d / D: %d - %f", playerName, Frags, Deaths, KDRate);
 			} else if (i != 1 && i != MaxClients) {
-				Format(CT_STATS, sizeof(CT_STATS), "%s, %s: K: %d / D: %d - %f, ", CT_STATS, playerName, playerName, Frags, Deaths, KDRate);
+				Format(CT_STATS, sizeof(CT_STATS), "%s, %s: K: %d / D: %d - %f, ", CT_STATS, playerName, Frags, Deaths, KDRate);
 			} else if (i != 1 && i == MaxClients) {
-				Format(CT_STATS, sizeof(CT_STATS), "%s%s: K: %d / D: %d - %f", CT_STATS, playerName, playerName, Frags, Deaths, KDRate);
+				Format(CT_STATS, sizeof(CT_STATS), "%s%s: K: %d / D: %d - %f", CT_STATS, playerName, Frags, Deaths, KDRate);
 			}
 		}
 	}
