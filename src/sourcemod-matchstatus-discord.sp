@@ -12,6 +12,8 @@
 
 #define DISCORD_WEBHOOK "https://discordapp.com/api/webhooks/"
 
+bool ACTIVE = false
+
 char DISCORD_MSG_START[2048] = "{\"content\": \"A match has started!\", \"embeds\": [{\"title\": \"Connect to GOTV by clicking here ({GOTV_URL})\", \"fields\": [{\"name\": \"Map:\", \"value\": \"{MAP_NAME}\"}, {\"name\": \"T Side:\", \"value\": \"{T_PLAYERS}\"}, {\"name\": \"CT Side:\", \"value\": \"{CT_PLAYERS}\"}]}]}"
 char DISCORD_MSG_HALF[2048] = "{\"content\": \"A match has reached half-time!\", \"embeds\": [{\"title\": \"Connect to GOTV by clicking here ({GOTV_URL})\", \"fields\": [{\"name\": \"Map:\", \"value\": \"{MAP_NAME}\"}, {\"name\": \"Current result:\", \"value\": \"{RESULT}\"}]}]}"
 char DISCORD_MSG_END[2048] = "{\"content\": \"A match has ended!\", \"embeds\": [{\"title\": \"This is the final data for this match:\", \"fields\": [{\"name\": \"Map:\", \"value\": \"{MAP_NAME}\"}, {\"name\": \"Final result:\", \"value\": \"{RESULT}\"}, {\"name\": \"T Side:\", \"value\": \"{T_PLAYERS}\"}, {\"name\": \"T Stats:\", \"value\": \"{T_STATS}\"}, {\"name\": \"CT Side:\", \"value\": \"{CT_PLAYERS}\"}, {\"name\": \"CT Stats:\", \"value\": \"{CT_STATS}\"}]}]}"
@@ -41,6 +43,11 @@ public OnPluginStart()
 	HookEvent("cs_intermission", OnHalfTime, EventHookMode_PostNoCopy);
 }
 
+public OnMapStart()
+{
+	CleanPlugin();
+}
+
 public Action CheckForConfigLine(int client, const char[] cmd, int args)
 {
 	char configline[40];
@@ -48,6 +55,10 @@ public Action CheckForConfigLine(int client, const char[] cmd, int args)
 
 	if (StrEqual(configline, "MR15 Match Config Loaded")) {
 			PrintToChatAll(configline);
+
+			CleanPlugin();
+
+			ACTIVE = true;
 
 			SendToDiscord("start");
 
@@ -57,13 +68,24 @@ public Action CheckForConfigLine(int client, const char[] cmd, int args)
   return Plugin_Continue;
 }
 
+public CleanPlugin() {
+	T_PLAYERS = "";
+	CT_PLAYERS = "";
+	T_STATS = "";
+	CT_STATS = "";
+
+	ACTIVE = false;
+}
+
 public OnHalfTime(Handle:event, const String:name[], bool:dontBroadcast)
 {
+	if (ACTIVE) {
 		if (getTScore() + getCTScore() == (GetConVarInt(mp_maxrounds) / 2) + 1 || getTScore() + getCTScore() > (GetConVarInt(mp_maxrounds) / 2) + 1) { // lazy overtime impl.
 			SendToDiscord("end");
 		} else {
 			SendToDiscord("half");
 		}
+	}
 }
 
 public SendToDiscord(char type[10]) {
@@ -149,6 +171,8 @@ public SendToDiscord(char type[10]) {
 		{
 			delete hRequest;
 		}
+
+		CleanPlugin();
 	} else if (StrEqual(type, "half")) {
 		char mapName[256];
 
