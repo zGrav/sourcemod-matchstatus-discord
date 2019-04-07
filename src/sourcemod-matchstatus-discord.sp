@@ -14,7 +14,7 @@
 
 char DISCORD_MSG_START[2048] = "{\"content\": \"A match has started!\", \"embeds\": [{\"title\": \"Connect to GOTV by clicking here ({GOTV_URL})\", \"fields\": [{\"name\": \"Map:\", \"value\": \"{MAP_NAME}\"}, {\"name\": \"T Side:\", \"value\": \"{T_PLAYERS}\"}, {\"name\": \"CT Side:\", \"value\": \"{CT_PLAYERS}\"}]}]}"
 char DISCORD_MSG_HALF[2048] = "{\"content\": \"A match has reached half-time!\", \"embeds\": [{\"title\": \"Connect to GOTV by clicking here ({GOTV_URL})\", \"fields\": [{\"name\": \"Map:\", \"value\": \"{MAP_NAME}\"}, {\"name\": \"Current result:\", \"value\": \"{RESULT}\"}]}]}"
-char DISCORD_MSG_END[2048] = "{\"content\": \"A match has ended!\", \"embeds\": [{\"title\": \"This is the final data for this match:\", \"fields\": [{\"name\": \"Map:\", \"value\": \"{MAP_NAME}\"}, {\"name\": \"Final result:\", \"value\": \"{RESULT}\"}, {\"name\": \"T Side:\", \"value\": \"{T_PLAYERS}\"}, {\"name\": \"T Stats:\", \"value\": \"{T_STATS}\"}, \"name\": \"CT Side:\", \"value\": \"{CT_PLAYERS}\"}, {\"name\": \"CT Stats:\", \"value\": \"{CT_STATS}\"}]}]}"
+char DISCORD_MSG_END[2048] = "{\"content\": \"A match has ended!\", \"embeds\": [{\"title\": \"This is the final data for this match:\", \"fields\": [{\"name\": \"Map:\", \"value\": \"{MAP_NAME}\"}, {\"name\": \"Final result:\", \"value\": \"{RESULT}\"}, {\"name\": \"T Side:\", \"value\": \"{T_PLAYERS}\"}, {\"name\": \"T Stats:\", \"value\": \"{T_STATS}\"}, {\"name\": \"CT Side:\", \"value\": \"{CT_PLAYERS}\"}, {\"name\": \"CT Stats:\", \"value\": \"{CT_STATS}\"}]}]}"
 
 char T_PLAYERS[512];
 char CT_PLAYERS[512];
@@ -30,13 +30,15 @@ public Plugin myinfo =
 	url = PLUGIN_URL
 };
 
+ConVar mp_maxrounds;
+
 public OnPluginStart()
 {
 	PrintToServer("sourcemod-matchstatus-discord loaded!");
 	PrintToServer("Current Discord Webhook: %s", DISCORD_WEBHOOK);
 	AddCommandListener(CheckForConfigLine, "say");
+	mp_maxrounds = FindConVar("mp_maxrounds");
 	HookEvent("cs_intermission", OnHalfTime, EventHookMode_PostNoCopy);
-	HookEvent("cs_win_panel_match", OnFinishedMatch, EventHookMode_PostNoCopy);
 }
 
 public Action CheckForConfigLine(int client, const char[] cmd, int args)
@@ -57,12 +59,11 @@ public Action CheckForConfigLine(int client, const char[] cmd, int args)
 
 public OnHalfTime(Handle:event, const String:name[], bool:dontBroadcast)
 {
-    SendToDiscord("half");
-}
-
-public OnFinishedMatch(Handle:event, const String:name[], bool:dontBroadcast)
-{
-    SendToDiscord("end");
+		if (getTScore() + getCTScore() == (GetConVarInt(mp_maxrounds) / 2) + 1 || getTScore() + getCTScore() > (GetConVarInt(mp_maxrounds) / 2) + 1) { // lazy overtime impl.
+			SendToDiscord("end");
+		} else {
+			SendToDiscord("half");
+		}
 }
 
 public SendToDiscord(char type[10]) {
@@ -88,6 +89,8 @@ public SendToDiscord(char type[10]) {
 		ReplaceString(DISCORD_MSG_START, sizeof(DISCORD_MSG_START), "{MAP_NAME}", mapName, true);
 		ReplaceString(DISCORD_MSG_START, sizeof(DISCORD_MSG_START), "{T_PLAYERS}", T_PLAYERS, true);
 		ReplaceString(DISCORD_MSG_START, sizeof(DISCORD_MSG_START), "{CT_PLAYERS}", CT_PLAYERS, true);
+
+		LogMessage("[SendToDiscord] Start match message: %s", DISCORD_MSG_START);
 
 		if(!hRequest || !SteamWorks_SetHTTPCallbacks(hRequest, view_as<SteamWorksHTTPRequestCompleted>(OnRequestComplete))
 					|| !SteamWorks_SetHTTPRequestRawPostBody(hRequest, "application/json", DISCORD_MSG_START, strlen(DISCORD_MSG_START))
@@ -119,8 +122,8 @@ public SendToDiscord(char type[10]) {
 			CT_STATS = "No stats";
 		}
 
-		int ctScore = CS_GetTeamScore(CS_TEAM_CT);
-		int tScore = CS_GetTeamScore(CS_TEAM_T);
+		int ctScore = getCTScore();
+		int tScore = getTScore();
 
 		char endResult[512];
 
@@ -138,6 +141,8 @@ public SendToDiscord(char type[10]) {
 		ReplaceString(DISCORD_MSG_END, sizeof(DISCORD_MSG_END), "{T_STATS}", T_STATS, true);
 		ReplaceString(DISCORD_MSG_END, sizeof(DISCORD_MSG_END), "{CT_STATS}", CT_STATS, true);
 
+		LogMessage("[SendToDiscord] Fulltime match message: %s", DISCORD_MSG_END);
+
 		if(!hRequest || !SteamWorks_SetHTTPCallbacks(hRequest, view_as<SteamWorksHTTPRequestCompleted>(OnRequestComplete))
 					|| !SteamWorks_SetHTTPRequestRawPostBody(hRequest, "application/json", DISCORD_MSG_END, strlen(DISCORD_MSG_END))
 					|| !SteamWorks_SendHTTPRequest(hRequest))
@@ -149,8 +154,8 @@ public SendToDiscord(char type[10]) {
 
 		GetCurrentMap(mapName, sizeof(mapName));
 
-		int ctScore = CS_GetTeamScore(CS_TEAM_CT);
-		int tScore = CS_GetTeamScore(CS_TEAM_T);
+		int ctScore = getCTScore();
+		int tScore = getTScore();
 
 		char halfTime[512];
 
@@ -164,6 +169,8 @@ public SendToDiscord(char type[10]) {
 		ReplaceString(DISCORD_MSG_HALF, sizeof(DISCORD_MSG_HALF), "{MAP_NAME}", mapName, true);
 		ReplaceString(DISCORD_MSG_HALF, sizeof(DISCORD_MSG_HALF), "{RESULT}", halfTime, true);
 
+		LogMessage("[SendToDiscord] Halftime match message: %s", DISCORD_MSG_HALF);
+
 		if(!hRequest || !SteamWorks_SetHTTPCallbacks(hRequest, view_as<SteamWorksHTTPRequestCompleted>(OnRequestComplete))
 					|| !SteamWorks_SetHTTPRequestRawPostBody(hRequest, "application/json", DISCORD_MSG_HALF, strlen(DISCORD_MSG_HALF))
 					|| !SteamWorks_SendHTTPRequest(hRequest))
@@ -171,6 +178,14 @@ public SendToDiscord(char type[10]) {
 			delete hRequest;
 		}
 	}
+}
+
+public int getTScore() {
+	return CS_GetTeamScore(CS_TEAM_T);
+}
+
+public int getCTScore() {
+	return CS_GetTeamScore(CS_TEAM_CT);
 }
 
 public getTs() {
@@ -202,14 +217,13 @@ public getTsStats() {
 
 			new Deaths = GetClientDeaths(i);
 			new Frags = GetClientFrags(i);
-			new Float:KDRate = float(Frags)/float(Deaths);
 
 			if (StrEqual(T_STATS, "")) {
-				Format(T_STATS, sizeof(T_STATS), "%s: K: %d / D: %d - %f", playerName, Frags, Deaths, KDRate);
+				Format(T_STATS, sizeof(T_STATS), "%s: K: %d / D: %d", playerName, Frags, Deaths);
 			} else if (i != 1 && i != MaxClients) {
-				Format(T_STATS, sizeof(T_STATS), "%s, %s: K: %d / D: %d - %f, ", T_STATS, playerName, Frags, Deaths, KDRate);
+				Format(T_STATS, sizeof(T_STATS), "%s, %s: K: %d / D: %d, ", T_STATS, playerName, Frags, Deaths);
 			} else if (i != 1 && i == MaxClients) {
-				Format(T_STATS, sizeof(T_STATS), "%s%s: K: %d / D: %d - %f", T_STATS, playerName, Frags, Deaths, KDRate);
+				Format(T_STATS, sizeof(T_STATS), "%s%s: K: %d / D: %d", T_STATS, playerName, Frags, Deaths);
 			}
 		}
 	}
@@ -244,14 +258,13 @@ public getCTsStats() {
 
 			new Deaths = GetClientDeaths(i);
 			new Frags = GetClientFrags(i);
-			new Float:KDRate = float(Frags)/float(Deaths);
 
 			if (StrEqual(CT_STATS, "")) {
-				Format(CT_STATS, sizeof(CT_STATS), "%s: K: %d / D: %d - %f", playerName, Frags, Deaths, KDRate);
+				Format(CT_STATS, sizeof(CT_STATS), "%s: K: %d / D: %d", playerName, Frags, Deaths);
 			} else if (i != 1 && i != MaxClients) {
-				Format(CT_STATS, sizeof(CT_STATS), "%s, %s: K: %d / D: %d - %f, ", CT_STATS, playerName, Frags, Deaths, KDRate);
+				Format(CT_STATS, sizeof(CT_STATS), "%s, %s: K: %d / D: %d, ", CT_STATS, playerName, Frags, Deaths);
 			} else if (i != 1 && i == MaxClients) {
-				Format(CT_STATS, sizeof(CT_STATS), "%s%s: K: %d / D: %d - %f", CT_STATS, playerName, Frags, Deaths, KDRate);
+				Format(CT_STATS, sizeof(CT_STATS), "%s%s: K: %d / D: %d", CT_STATS, playerName, Frags, Deaths);
 			}
 		}
 	}
