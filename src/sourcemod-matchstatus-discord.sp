@@ -199,7 +199,7 @@ public getTs() {
 			if (StrEqual(T_PLAYERS, "")) {
 				Format(T_PLAYERS, sizeof(T_PLAYERS), "%s", playerName);
 			} else if (i != 1 && i != MaxClients) {
-				Format(T_PLAYERS, sizeof(T_PLAYERS), "%s, %s, ", T_PLAYERS, playerName);
+				Format(T_PLAYERS, sizeof(T_PLAYERS), "%s, %s ", T_PLAYERS, playerName);
 			} else if (i != 1 && i == MaxClients) {
 				Format(T_PLAYERS, sizeof(T_PLAYERS), "%s%s", T_PLAYERS, playerName);
 			}
@@ -240,9 +240,9 @@ public getCTs() {
 			if (StrEqual(CT_PLAYERS, "")) {
 				Format(CT_PLAYERS, sizeof(CT_PLAYERS), "%s", playerName);
 			} else if (i != 1 && i != MaxClients) {
-				Format(CT_PLAYERS, sizeof(CT_PLAYERS), "%s, %s, ", T_PLAYERS, playerName);
+				Format(CT_PLAYERS, sizeof(CT_PLAYERS), "%s, %s ", CT_PLAYERS, playerName);
 			} else if (i != 1 && i == MaxClients) {
-				Format(CT_PLAYERS, sizeof(CT_PLAYERS), "%s%s", T_PLAYERS, playerName);
+				Format(CT_PLAYERS, sizeof(CT_PLAYERS), "%s%s", CT_PLAYERS, playerName);
 			}
 		}
 	}
