@@ -6,7 +6,7 @@
 #define PLUGIN_AUTHOR "z"
 #define PLUGIN_DESCRIPTION "Basically pushes to a Discord channel when a game starts and finishes with result/stats."
 #define PLUGIN_VERSION "1.0.0"
-#define PLUGIN_URL "http://github.com/zGrav/sourcemod-gameinfo-pusher-discord"
+#define PLUGIN_URL "http://github.com/zGrav/sourcemod-matchstatus-discord"
 
 #define GOTV_URL "steam://connect/csgo.zgrav.pro:27302"
 
