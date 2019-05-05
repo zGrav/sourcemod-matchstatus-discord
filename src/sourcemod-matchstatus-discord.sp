@@ -214,6 +214,8 @@ public int getCTScore() {
 
 public getTs() {
 	char playerName[512];
+	
+	T_PLAYERS = ""; // clear them on every fetch.
 
 	for (new i = 1; i <= MaxClients; i++)
 	{
@@ -256,6 +258,8 @@ public getTsStats() {
 
 public getCTs() {
 	char playerName[512];
+	
+	CT_PLAYERS = ""; // clear them on every fetch.
 
 	for (new i = 1; i <= MaxClients; i++)
 	{
